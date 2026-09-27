@@ -14,16 +14,15 @@ void main()
 }
 </script>
 
-<!--고정 색 대신 uniform으로 색을 받는다  -->
+<!-- 단편 shader: 색을 uniform으로 받는다 (카펫 색, 선 색 모두 이걸로 처리) -->
 <script id="fragment-shader" type="x-shader/x-fragment">
-// 기기가 highp를 지원하면 highp, 아니면 mediump 사용
 #ifdef GL_FRAGMENT_PRECISION_HIGH
     precision highp float;
 #else
     precision mediump float;
 #endif
 
-uniform vec4 uColor;   // JS에서 gl.uniform4fv로 넘겨주는 카펫 색
+uniform vec4 uColor;
 
 void main()
 {
@@ -52,10 +51,15 @@ void main()
     <span id="levelText">3</span>
 </div>
 
-<!--색상 제어 -->
+<!-- 색상 제어 -->
 <div style="margin-top:8px">
     카펫 색 <input id="carpetColor" type="color" value="#1f5fa8">
     &nbsp; 배경 색 <input id="bgColor" type="color" value="#ffffff">
+</div>
+
+<!--  삼각형 분할 표시 -->
+<div style="margin-top:8px">
+    <label><input id="showEdges" type="checkbox"> 삼각형 분할 표시</label>
 </div>
 </body>
 </html>
