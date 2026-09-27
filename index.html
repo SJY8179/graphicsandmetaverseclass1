@@ -32,8 +32,17 @@ void main()
 </head>
 
 <body>
+    <h3>Sierpinski Carpet</h3>
 <canvas id="gl-canvas" width="512" height="512" style="border:1px solid #ccc">
 이 브라우저는 HTML5 canvas를 지원하지 않습니다.
 </canvas>
+<!-- 분할 횟수 제어 -->
+<div style="margin-top:12px">
+    분할 횟수
+    <button id="levelDown">-</button>
+    <input id="level" type="range" min="0" max="6" step="1" value="3">
+    <button id="levelUp">+</button>
+    <span id="levelText">3</span>
+</div>
 </body>
 </html>
