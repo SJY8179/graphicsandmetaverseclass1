@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Sierpinski Carpet</title>
+
+<!-- 정점 shader: 받은 좌표를 그대로 clip 좌표로 내보낸다 -->
+<script id="vertex-shader" type="x-shader/x-vertex">
+attribute vec4 vPosition;
+
+void main()
+{
+    gl_Position = vPosition;
+}
+</script>
+
+<!-- 단편 shader: 일단 색을 고정해 둔다 -->
+<script id="fragment-shader" type="x-shader/x-fragment">
+precision mediump float;
+
+void main()
+{
+    gl_FragColor = vec4( 0.12, 0.37, 0.66, 1.0 );
+}
+</script>
+
+<!-- 교재 유틸리티 → 내 코드 순서로 불러온다 (순서가 바뀌면 함수를 못 찾음) -->
+<script src="Common/webgl-utils.js"></script>
+<script src="Common/initShaders.js"></script>
+<script src="Common/MV.js"></script>
+<script src="carpet.js"></script>
+</head>
+
+<body>
+<canvas id="gl-canvas" width="512" height="512" style="border:1px solid #ccc">
+이 브라우저는 HTML5 canvas를 지원하지 않습니다.
+</canvas>
+</body>
+</html>
