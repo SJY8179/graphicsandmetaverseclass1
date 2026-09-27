@@ -3,7 +3,8 @@
 var canvas;
 var gl;
 
-var points = [];   // GPU로 보낼 정점들을 모아두는 배열
+var points = [];               // GPU로 보낼 정점들을 모아두는 배열
+var NumTimesToSubdivide = 3;   // 분할 횟수
 
 window.onload = function init()
 {
@@ -13,11 +14,11 @@ window.onload = function init()
     if ( !gl ) { alert( "WebGL isn't available" ); }
 
     // 초기 정사각형: 좌하단 a, 우상단 c
-    // clip 좌표는 -1 ~ 1이므로 0.9로 잡아 테두리에 여백을 둔다
     var a = vec2( -0.9, -0.9 );
     var c = vec2(  0.9,  0.9 );
 
-    square( a, c );
+    // 정사각형 하나를 바로 그리지 않고, 재귀 분할을 시작한다
+    divideSquare( a, c, NumTimesToSubdivide );
 
     gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.clearColor( 1.0, 1.0, 1.0, 1.0 );
@@ -45,6 +46,37 @@ function square( a, c )
 
     points.push( a, b, c );       // 삼각형 1
     points.push( a, c, d );       // 삼각형 2
+}
+
+// [4단계에서 새로 추가한 함수]
+// a: 좌하단, c: 우상단, count: 앞으로 더 나눌 횟수
+function divideSquare( a, c, count )
+{
+    // 재귀 종료 조건: 더 나눌 횟수가 없으면 이 칸을 그대로 기록하고 끝
+    if ( count === 0 ) {
+        square( a, c );
+        return;
+    }
+
+    // 한 칸의 가로(w), 세로(h) 길이 = 전체 길이를 3등분
+    var w = ( c[0] - a[0] ) / 3;
+    var h = ( c[1] - a[1] ) / 3;
+
+
+    //
+    for ( var row = 0; row < 3; ++row ) {
+        for ( var col = 0; col < 3; ++col ) {
+
+            if ( row === 1 && col === 1 ) continue;   // 가운데 칸 제거
+
+            // 이 칸의 좌하단(subA)과 우상단(subC) 좌표 계산
+            var subA = vec2( a[0] + col * w,       a[1] + row * h );
+            var subC = vec2( a[0] + (col + 1) * w, a[1] + (row + 1) * h );
+
+            // 작은 칸을 같은 방식으로 다시 분할 (남은 횟수는 하나 줄어듦)
+            divideSquare( subA, subC, count - 1 );
+        }
+    }
 }
 
 function render()
