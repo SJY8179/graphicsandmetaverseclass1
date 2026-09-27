@@ -10,6 +10,11 @@ var MAX_LEVEL = 6;   // 8^6 = 262,144개. 이보다 크면 한 칸이 1픽셀보
 // 여러 함수에서 쓰도록 전역으로 옮긴 것들
 var bufferId;
 var vPosition;
+var uColorLoc;       // shader의 uColor 위치
+
+// 색상 상태 (각 성분 0.0 ~ 1.0)
+var carpetColor = vec4( 0.12, 0.37, 0.66, 1.0 );
+var bgColor     = vec4( 1.0, 1.0, 1.0, 1.0 );
 
 window.onload = function init()
 {
@@ -19,7 +24,6 @@ window.onload = function init()
     if ( !gl ) { alert( "WebGL isn't available" ); }
 
     gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.clearColor( 1.0, 1.0, 1.0, 1.0 );
 
     var program = initShaders( gl, "vertex-shader", "fragment-shader" );
     gl.useProgram( program );
@@ -31,6 +35,9 @@ window.onload = function init()
     vPosition = gl.getAttribLocation( program, "vPosition" );
     gl.vertexAttribPointer( vPosition, 2, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vPosition );
+
+    // [6단계] uniform 변수 uColor의 위치를 얻어 둔다
+    uColorLoc = gl.getUniformLocation( program, "uColor" );
 
     setupUI();
     buildCarpet();
@@ -51,6 +58,7 @@ function buildCarpet()
     render();
 }
 
+// 정사각형 하나 = 삼각형 두 개
 function square( a, c )
 {
     var b = vec2( c[0], a[1] );
@@ -60,6 +68,7 @@ function square( a, c )
     points.push( a, c, d );
 }
 
+// 3x3으로 나누고 가운데 칸을 버리는 재귀 분할
 function divideSquare( a, c, count )
 {
     if ( count === 0 ) {
@@ -83,6 +92,7 @@ function divideSquare( a, c, count )
 }
 
 
+
 function setupUI()
 {
     var slider = document.getElementById( "level" );
@@ -98,6 +108,26 @@ function setupUI()
     document.getElementById( "levelUp" ).onclick = function () {
         setLevel( NumTimesToSubdivide + 1 );
     };
+
+    // 색상은 uniform 값만 바꾸면 되므로
+    // buildCarpet()(정점 재생성)이 아니라 render()만 호출한다
+    document.getElementById( "carpetColor" ).addEventListener( "input", function ( e ) {
+        carpetColor = hexToVec4( e.target.value );
+        render();
+    });
+    document.getElementById( "bgColor" ).addEventListener( "input", function ( e ) {
+        bgColor = hexToVec4( e.target.value );
+        render();
+    });
+}
+
+// [6단계] color input의 "#rrggbb"(0~255, 16진수)를 vec4(r, g, b, 1.0)(0.0~1.0)으로 변환
+function hexToVec4( hex )
+{
+    var r = parseInt( hex.substr( 1, 2 ), 16 ) / 255;
+    var g = parseInt( hex.substr( 3, 2 ), 16 ) / 255;
+    var b = parseInt( hex.substr( 5, 2 ), 16 ) / 255;
+    return vec4( r, g, b, 1.0 );
 }
 
 function setLevel( n )
@@ -117,6 +147,10 @@ function setLevel( n )
 
 function render()
 {
+    // [6단계] 배경색은 clearColor로, 카펫 색은 uniform으로 전달
+    gl.clearColor( bgColor[0], bgColor[1], bgColor[2], 1.0 );
     gl.clear( gl.COLOR_BUFFER_BIT );
+
+    gl.uniform4fv( uColorLoc, flatten( carpetColor ) );
     gl.drawArrays( gl.TRIANGLES, 0, points.length );
 }

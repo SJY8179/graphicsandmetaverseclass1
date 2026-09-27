@@ -14,17 +14,23 @@ void main()
 }
 </script>
 
-<!-- 단편 shader: 일단 색을 고정해 둔다 -->
+<!--고정 색 대신 uniform으로 색을 받는다  -->
 <script id="fragment-shader" type="x-shader/x-fragment">
-precision mediump float;
+// 기기가 highp를 지원하면 highp, 아니면 mediump 사용
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+    precision highp float;
+#else
+    precision mediump float;
+#endif
+
+uniform vec4 uColor;   // JS에서 gl.uniform4fv로 넘겨주는 카펫 색
 
 void main()
 {
-    gl_FragColor = vec4( 0.12, 0.37, 0.66, 1.0 );
+    gl_FragColor = uColor;
 }
 </script>
 
-<!-- 교재 유틸리티 → 내 코드 순서로 불러온다 (순서가 바뀌면 함수를 못 찾음) -->
 <script src="Common/webgl-utils.js"></script>
 <script src="Common/initShaders.js"></script>
 <script src="Common/MV.js"></script>
@@ -32,10 +38,11 @@ void main()
 </head>
 
 <body>
-    <h3>Sierpinski Carpet</h3>
+<h3>Sierpinski Carpet</h3>
 <canvas id="gl-canvas" width="512" height="512" style="border:1px solid #ccc">
 이 브라우저는 HTML5 canvas를 지원하지 않습니다.
 </canvas>
+
 <!-- 분할 횟수 제어 -->
 <div style="margin-top:12px">
     분할 횟수
@@ -43,6 +50,12 @@ void main()
     <input id="level" type="range" min="0" max="6" step="1" value="3">
     <button id="levelUp">+</button>
     <span id="levelText">3</span>
+</div>
+
+<!--색상 제어 -->
+<div style="margin-top:8px">
+    카펫 색 <input id="carpetColor" type="color" value="#1f5fa8">
+    &nbsp; 배경 색 <input id="bgColor" type="color" value="#ffffff">
 </div>
 </body>
 </html>
