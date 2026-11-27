@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Earth Terrain</title>
+
+<!-- 정점 shader: 정점을 클립 좌표로 보내고, 수정 Phong 모델로 정점의 색을 계산한다 -->
+<script id="vertex-shader" type="x-shader/x-vertex">
+attribute vec4 vPosition;
+attribute vec4 vNormal;     // 법선 (방향이므로 w = 0)
+attribute vec4 vColor;      // rgb = 고도로 정한 색, a = 반사광 세기 (바다만 0보다 큼)
+
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+uniform vec4 lightPosition; // 태양. w = 0 이라 위치가 아니라 방향만 있는 평행 광원
+uniform vec4 lightAmbient;
+uniform vec4 lightDiffuse;
+uniform vec4 lightSpecular;
+uniform float shininess;
+
+varying vec4 fColor;
+
+void main()
+{
+    // 조명 계산은 눈 좌표에서 한다 (카메라가 원점)
+    vec3 pos = ( modelViewMatrix * vPosition ).xyz;
+
+    // 태양에는 모델-뷰 행렬을 곱하지 않는다. 곱하면 태양이 지구와 같이 돌게 된다
+    vec3 L = normalize( lightPosition.xyz );
+    vec3 E = normalize( -pos );
+    vec3 H = normalize( L + E );
+    vec3 N = normalize( ( modelViewMatrix * vNormal ).xyz );
+
+    // 물질의 색이 정점마다 달라서 광원과의 곱을 여기서 계산한다
+    vec4 material = vec4( vColor.rgb, 1.0 );
+
+    vec4 ambient = lightAmbient * material;
+
+    float Kd = max( dot( L, N ), 0.0 );
+    vec4 diffuse = Kd * lightDiffuse * material;
+
+    float Ks = pow( max( dot( N, H ), 0.0 ), shininess );
+    vec4 specular = Ks * lightSpecular * vColor.a;
+    if ( dot( L, N ) < 0.0 ) specular = vec4( 0.0, 0.0, 0.0, 1.0 );
+
+    fColor = ambient + diffuse + specular;
+    fColor.a = 1.0;
+
+    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+}
+</script>
+
+<!-- 단편 shader: 정점에서 계산해 보간된 색을 그대로 쓴다 -->
+<script id="fragment-shader" type="x-shader/x-fragment">
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+    precision highp float;
+#else
+    precision mediump float;
+#endif
+
+varying vec4 fColor;
+
+void main()
+{
+    gl_FragColor = fColor;
+}
+</script>
+
+<script src="Common/webgl-utils.js"></script>
+<script src="Common/initShaders.js"></script>
+<script src="Common/MV.js"></script>
+<script src="elevation.js"></script>
+<script src="earth.js"></script>
+</head>
+
+<body>
+<h3>Earth Terrain</h3>
+<canvas id="gl-canvas" width="600" height="600">
+이 브라우저는 HTML5 canvas를 지원하지 않습니다.
+</canvas>
+
+<!-- 지형 -->
+<div style="margin-top:12px">
+    고도 과장
+    <input id="exaggeration" type="range" min="0" max="100" step="1" value="30">
+    <span id="exaggerationText">30</span>배
+    &nbsp;
+    <label><input id="seafloor" type="checkbox"> 바닷물을 빼고 해저 지형 보기</label>
+</div>
+
+<!-- 회전 -->
+<div style="margin-top:8px">
+    <button id="spinToggle">자전 정지</button>
+    &nbsp; 자전 속도
+    <input id="spinSpeed" type="range" min="0" max="2" step="0.1" value="0.3">
+</div>
+
+<!-- 조명 -->
+<div style="margin-top:8px">
+    태양 방향
+    <input id="sunAngle" type="range" min="0" max="360" step="1" value="50">
+    <span id="sunText">50</span>°
+    &nbsp;
+    <label><input id="sunMove" type="checkbox"> 태양 자동 이동</label>
+</div>
+
+<p style="font-size:12px; color:#666">
+고도 자료: NOAA ETOPO1 (Fatiando a Terra 10분 격자, CC-BY 4.0)를 1도 간격으로 줄여 사용
+</p>
+</body>
+</html>
